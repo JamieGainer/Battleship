@@ -20,27 +20,41 @@ class Game():
         self.board_width = board_width
         self.ship_dict = default_ship_dict
 
-        self.human_sunk_ships = set([])
-        self.computer_sunk_ships = set([])
-
-        self.human_board = [[' O ' for j in range(self.board_width)]
-                            for i in range(self.board.height)]
-        self.computer_board = [[' O ' for j in range(self.board_width)]
-                              for i in range(self.board.height)]
-
-        self.human_plays = []
-        self.computer_plays = []
+        self.squares = {}
+        for board in ['human', 'computer']:
+            self.squares[board] = {}
+            self.squares[board] = {
+                                  'ship_squares': {}.
+                                  'sunk_ship_squares': {},
+                                  'hits': set([]),
+                                  'misses': set([])
+                                  }
 
 
     def print_board(self, board):
-        for row in board:
-            for space in row:
-                print(space, end = '|')
+        if board not in ['human', 'computer']:
+            raise ValueError('Unknown option for board.')
+        is_human = (board == human)
+        for i in range(self.board_height):
+            for j in range(self.board_width):
+                if (i,j) in self.squares[board]['hits']:
+                    print(' X ', end = '|')
+                elif (i,j) in self.squares[board]['misses']:
+                    print(' O ', end = '|')
+                elif (i,j) in self.squares[board]['sunk_ship_squares']:
+                    length = self.squares[board]['sunk_ship_squares'][(i,j)]
+                    print(' ' + str(length), end = ' |')
+                elif (i,j) in self.squares[board]['ship_squares'] and board == 
+                    
+                else:
+                    print(' - ', end = '|')
             print()
 
+
+
     def setup_computer_ships(self, maxtries = 10000):
-        computer_ship_squares = set([])
-        squares_by_ship = {}
+        self.computer_ship_squares = set([])
+        self.computer_squares_by_ship = {}
         for ship, length in self.ship_dict.items():
             tries = 0
             while tries < maxtries: # Try to place success until successful
@@ -60,8 +74,8 @@ class Game():
                     else:
                         ship_squares.add(square)
                 else:
-                    computer_ship_squares.update(ship_squares)
-                    squares_by_ship[ship] = ship_squares
+                    self.computer_ship_squares.update(ship_squares)
+                    self.computer_squares_by_ship[ship] = ship_squares
             if tries >= maxtries:
                 raise RuntimeError("Unable to setup pieces")
 
