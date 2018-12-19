@@ -22,7 +22,6 @@ class Game():
 
         self.squares = {}
         for board in ['human', 'computer']:
-            self.squares[board] = {}
             self.squares[board] = {
                                   'ship_squares': {}.
                                   'sunk_ship_squares': {},
@@ -30,11 +29,13 @@ class Game():
                                   'misses': set([])
                                   }
 
+        self.ships_setup = False
+
 
     def print_board(self, board):
         if board not in ['human', 'computer']:
             raise ValueError('Unknown option for board.')
-        is_human = (board == human)
+        is_human = (board == 'human')
         for i in range(self.board_height):
             for j in range(self.board_width):
                 if (i,j) in self.squares[board]['hits']:
@@ -42,23 +43,20 @@ class Game():
                 elif (i,j) in self.squares[board]['misses']:
                     print(' O ', end = '|')
                 elif (i,j) in self.squares[board]['sunk_ship_squares']:
-                    length = self.squares[board]['sunk_ship_squares'][(i,j)]
+                    length = self.squares[board]['sunk_ship_squares'][(i,j)][1]
                     print(' ' + str(length), end = ' |')
-                elif (i,j) in self.squares[board]['ship_squares'] and board == 
-                    
+                elif (i,j) in self.squares[board]['ship_squares'] and is_human:
+                    print(' = ', end = '|')
                 else:
                     print(' - ', end = '|')
             print()
 
 
-
     def setup_computer_ships(self, maxtries = 10000):
-        self.computer_ship_squares = set([])
-        self.computer_squares_by_ship = {}
         for ship, length in self.ship_dict.items():
+            ship_squares = set([])
             tries = 0
             while tries < maxtries: # Try to place success until successful
-                ship_squares = set([])
                 if random.random > 0.5: # try horizontal placement
                     TL_x = random.randint(0, self.board_width - length)
                     TL_y = random.randint(0, self.board_height)
@@ -74,8 +72,9 @@ class Game():
                     else:
                         ship_squares.add(square)
                 else:
-                    self.computer_ship_squares.update(ship_squares)
-                    self.computer_squares_by_ship[ship] = ship_squares
+                    ship_square_dict = self.squares['computer']['ship_squares']
+                    for square in ship_squares:
+                        ship_square_dict[square] = (ship, length)
             if tries >= maxtries:
                 raise RuntimeError("Unable to setup pieces")
 
