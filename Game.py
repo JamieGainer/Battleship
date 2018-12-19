@@ -18,6 +18,7 @@ class Game():
 
         self.board_height = board_height
         self.board_width = board_width
+        assert self.board_width < 26
         self.ship_dict = default_ship_dict
 
         self.squares = {}
@@ -28,7 +29,7 @@ class Game():
                                   'hits': set([]),
                                   'misses': set([])
                                   }
-
+        self.ships = {'human': {}, 'computer': {}}
         self.ships_setup = False
 
 
@@ -58,7 +59,7 @@ class Game():
             ship_squares = set([])
             tries = 0
             while tries < maxtries: # Try to place success until successful
-                if random.random > 0.5: # try horizontal placement
+                if random.random > 0.5: # horizontal placement
                     TL_x = random.randint(0, self.board_width - length)
                     TL_y = random.randint(0, self.board_height)
                     squares = [(x, TL_y) for x in range(TL_x, TL_x + length)]
@@ -78,5 +79,47 @@ class Game():
             if tries >= maxtries:
                 raise RuntimeError("Unable to setup pieces")
 
-    
+
+    def setup_human_ships(self):
+        for ship, length in self.ship_dict.items():
+            while True:
+                print("Please enter top left corner for", ship)
+                print("(E.g. C6 gives 3rd column from left and 6th row from top.)")
+                print("Or press 'q' or 'Q' to quit.")
+                square = input()
+                if square.upper() == 'Q':
+                    return
+                try:
+                    column = string.ascii_uppercase.index(square[0])
+                    assert column >= 0 and column < self.board_width
+                    row = int(square[1:]) - 1
+                    assert row >= 0 and row < self.board_height
+                except:
+                    print('Invalid Square')
+                    continue
+                print("Please enter 'H' for horizontal or 'V' for vertical " + 
+                      "placement of ship (or q/Q to quit).")
+                orientation = input()
+                if square.upper() == 'Q':
+                    return
+                try:
+                    assert orientation.upper() in ['H', 'V']
+                except:
+                    print('Invalid Orientation')
+                    continue
+                if orientation.upper() == 'H':
+                    squares = [(row, column + i) for i in range(length)]
+                else:
+                    squares = [(row + i, column) for i in range(length)]
+                for square in squares:
+                    if square in self.squares['human'].ship_squares:
+                        print('Ship in the way!')
+                        break
+                else:
+                    for square in squares:
+                        self.squares['human'].ship_squares[square] = (ship, length)
+
+
+
+
 
