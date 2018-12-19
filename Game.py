@@ -53,6 +53,7 @@ class Game():
 
 
     def setup_computer_ships(self, maxtries = 10000):
+        ship_square_dict = self.squares['computer']['ship_squares']
         for ship, length in self.ship_dict.items():
             ship_squares = set([])
             tries = 0
@@ -66,15 +67,16 @@ class Game():
                     TL_y = random.randint(0, self.board_height - length)
                     squares = [(TL_x, y) for y in range(TL_y, TL_y + length)]
                 for square in squares:
-                    if square in computer_ship_squares:
+                    if square in ship_square_dict:
                         tries += 1
                         break
                     else:
                         ship_squares.add(square)
                 else:
-                    ship_square_dict = self.squares['computer']['ship_squares']
                     for square in ship_squares:
                         ship_square_dict[square] = (ship, length)
             if tries >= maxtries:
                 raise RuntimeError("Unable to setup pieces")
+
+    
 
