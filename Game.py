@@ -1,5 +1,7 @@
 """ Placeholder for docstring """
 
+import random
+
 default_ship_dict = {
                     'Carrier': 5,
                     'Battleship': 4,
@@ -35,3 +37,31 @@ class Game():
             for space in row:
                 print(space, end = '|')
             print()
+
+    def setup_computer_ships(self, maxtries = 10000):
+        computer_ship_squares = set([])
+        squares_by_ship = {}
+        for ship, length in self.ship_dict.items():
+            tries = 0
+            while tries < maxtries: # Try to place success until successful
+                ship_squares = set([])
+                if random.random > 0.5: # try horizontal placement
+                    TL_x = random.randint(0, self.board_width - length)
+                    TL_y = random.randint(0, self.board_height)
+                    squares = [(x, TL_y) for x in range(TL_x, TL_x + length)]
+                else:
+                    TL_x = random.randint(0, self.board_width)
+                    TL_y = random.randint(0, self.board_height - length)
+                    squares = [(TL_x, y) for y in range(TL_y, TL_y + length)]
+                for square in squares:
+                    if square in computer_ship_squares:
+                        tries += 1
+                        break
+                    else:
+                        ship_squares.add(square)
+                else:
+                    computer_ship_squares.update(ship_squares)
+                    squares_by_ship[ship] = ship_squares
+            if tries >= maxtries:
+                raise RuntimeError("Unable to setup pieces")
+
