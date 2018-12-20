@@ -11,20 +11,20 @@ default_ship_dict = {
                      }
 
 class Game():
-"""Placeholder for docstring """
+    """Placeholder for docstring """
 
     def __init__(self, board_height = 10, board_width = 10, 
                  ship_dict = default_ship_dict):
 
         self.board_height = board_height
         self.board_width = board_width
-        assert self.board_width < 26
+        assert self.board_width < 17 # so as not to reuse 'Q'
         self.ship_dict = default_ship_dict
 
         self.squares = {}
         for board in ['human', 'computer']:
             self.squares[board] = {
-                                  'ship_squares': {}.
+                                  'ship_squares': {},
                                   'sunk_ship_squares': {},
                                   'hits': set([]),
                                   'misses': set([])
@@ -47,19 +47,19 @@ class Game():
                     length = self.squares[board]['sunk_ship_squares'][(i,j)][1]
                     print(' ' + str(length), end = ' |')
                 elif (i,j) in self.squares[board]['ship_squares'] and is_human:
-                    print(' = ', end = '|')
+                    print(' $ ', end = '|')
                 else:
                     print(' - ', end = '|')
             print()
 
 
-    def setup_computer_ships(self, maxtries = 10000):
+    def setup_computer_ships(self, maxtries = 1):
         ship_square_dict = self.squares['computer']['ship_squares']
         for ship, length in self.ship_dict.items():
-            ship_squares = set([])
             tries = 0
             while tries < maxtries: # Try to place success until successful
-                if random.random > 0.5: # horizontal placement
+                ship_squares = set([])
+                if random.random() > 0.5: # horizontal placement
                     TL_x = random.randint(0, self.board_width - length)
                     TL_y = random.randint(0, self.board_height)
                     squares = [(x, TL_y) for x in range(TL_x, TL_x + length)]
@@ -70,17 +70,19 @@ class Game():
                 for square in squares:
                     if square in ship_square_dict:
                         tries += 1
-                        break
+                        continue
                     else:
                         ship_squares.add(square)
                 else:
                     for square in ship_squares:
                         ship_square_dict[square] = (ship, length)
+                    break
             if tries >= maxtries:
                 raise RuntimeError("Unable to setup pieces")
 
 
     def setup_human_ships(self):
+        import string
         for ship, length in self.ship_dict.items():
             while True:
                 print("Please enter top left corner for", ship)
@@ -90,7 +92,7 @@ class Game():
                 if square.upper() == 'Q':
                     return
                 try:
-                    column = string.ascii_uppercase.index(square[0])
+                    column = string.ascii_uppercase.index(square[0].upper())
                     assert column >= 0 and column < self.board_width
                     row = int(square[1:]) - 1
                     assert row >= 0 and row < self.board_height
@@ -112,12 +114,13 @@ class Game():
                 else:
                     squares = [(row + i, column) for i in range(length)]
                 for square in squares:
-                    if square in self.squares['human'].ship_squares:
+                    if square in self.squares['human']['ship_squares']:
                         print('Ship in the way!')
                         break
                 else:
                     for square in squares:
-                        self.squares['human'].ship_squares[square] = (ship, length)
+                        self.squares['human']['ship_squares'][square] = (ship, length)
+                    break
 
 
 
