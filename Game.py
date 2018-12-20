@@ -30,6 +30,7 @@ class Game():
                                   'misses': set([])
                                   }
         self.ships = {'human': {}, 'computer': {}}
+        self.sunk = {'human': [], 'computer': []}
         self.ships_setup = False
 
 
@@ -124,6 +125,7 @@ class Game():
                         self.ships['human'][ship] = (set(ship_squares), set([]))
                     break
 
+
     def computer_fires(self):
         import string
         while True:
@@ -139,6 +141,24 @@ class Game():
                 if square in self.squares['human']['ship_squares']:
                     print('Hit!')
                     self.squares['human']['hits'].add(square)
+                    for ship in self.ships['human']:
+                        length = self.ship_dict[ship]
+                        if square in self.ships['human'][ship][0]:
+                            self.ships['human'][ship][0].subtract(square)
+                            self.ships['human'][ship][1].add(square)
+                            if len(self.ships['human'][ship][0]) == 0: # sink
+                                print('Computer sinks', ship, '\b!')
+                                for square in self.ships['human'][ship][1]:
+                                    self.squares['human']['hits'].subtract(square)
+                                    self.squares['human']['sunk_ship_squares'] = length
+                                self.sunk['human'].append(ship)
+                                if len(self.sunk['human']) == len(self.ship_dict):
+                                    print('Game over!  Computer wins!')
+                                    print('Human')
+                                    self.print_board('human')
+                                    print('Computer')
+                                    self.print_board('computer')
+                                    return "Game over"
                 else:
                     print('Miss!')
                     self.squares['human']['misses'].add(square)
@@ -197,8 +217,9 @@ class Game():
                     else:
                         print('Miss!')
                         self.squares['computer']['misses'].add(square)
-                    self.computer_fires()
-
+                    message = self.computer_fires()
+                    if message == 'Game over':
+                        return
 
 
 
