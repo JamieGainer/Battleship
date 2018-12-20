@@ -19,7 +19,8 @@ class Game():
         self.board_height = board_height
         self.board_width = board_width
         assert self.board_width < 17 # so as not to reuse 'Q'
-        self.ship_dict = default_ship_dict
+        self.ship_dict = ship_dict
+        self.min_ship_length = min(self.ship_dict.values())
 
         self.squares = {}
         for board in ['human', 'computer']:
@@ -128,41 +129,73 @@ class Game():
 
     def computer_fires(self):
         import string
-        while True:
-            row = random.randint(0, self.board_height - 1)
-            column = random.randint(0, self.board_width - 1)
-            square = (row, column)
-            for dict_name in ['hits', 'misses', 'sunk_ship_squares']:
-                if square in self.squares['human'][dict_name]:
+        square = None
+        if len(self.squares['human']['hits']) != 0:
+            hits = set([])
+            ok_square = False
+            while True:
+                hit = self.squares['human']['hits'].pop()
+                hits.add(hit)
+                trials = [(hit[0], hit[1] + 1), (hit[0], hit[1] - 1),
+                          (hit[0] + 1, hit[1]), (hit[0] - 1, hit[1])]
+                for trial in trials:
+                    width_ok = (0 <= trial[0] and trial[0] < self.board_width)
+                    height_ok = (0 <= trial[1] and trial[1] < self.board_height)
+                    not_in_hits = (trial not in self.squares['human']['hits'])
+                    not_in_hits2 = (trial not in hits)
+                    not_in_hits = not_in_hits and not_in_hits2
+                    not_in_misses = (trial not in self.squares['human']['misses'])
+                    not_in_sunk = (trial not in self.squares['human']['sunk_ship_squares'])
+                    new_square = not_in_hits and not_in_misses and not_in_sunk
+                    if width_ok and height_ok and new_square:
+                        square = trial
+                        self.squares['human']['hits'].update(hits)
+                        ok_square = True
+                        break
+                if ok_square:
                     break
-            else:
-                print('Computer fires at', string.ascii_uppercase[column] + 
-                      str(row + 1))
-                if square in self.squares['human']['ship_squares']:
-                    print('Hit!')
-                    self.squares['human']['hits'].add(square)
-                    for ship in self.ships['human']:
-                        length = self.ship_dict[ship]
-                        if square in self.ships['human'][ship][0]:
-                            self.ships['human'][ship][0].remove(square)
-                            self.ships['human'][ship][1].add(square)
-                            if len(self.ships['human'][ship][0]) == 0: # sink
-                                print('Computer sinks', ship, '\b!')
-                                for square in self.ships['human'][ship][1]:
-                                    self.squares['human']['hits'].remove(square)
-                                    self.squares['human']['sunk_ship_squares'][square] = length
-                                self.sunk['human'].append(ship)
-                                if len(self.sunk['human']) == len(self.ship_dict):
-                                    print('Game over!  Computer wins!')
-                                    print('Human')
-                                    self.print_board('human')
-                                    print('Computer')
-                                    self.print_board('computer')
-                                    return "Game over"
+        if square == None:
+            while True:
+                row = random.randint(0, self.board_height - 1)
+                column = random.randint(0, self.board_width - 1)
+                trial_square = (row, column)
+                for dict_name in ['hits', 'misses', 'sunk_ship_squares']:
+                    if trial_square in self.squares['human'][dict_name]:
+                        continue
                 else:
-                    print('Miss!')
-                    self.squares['human']['misses'].add(square)
-                break
+                    square = trial_square
+                    break
+
+        row, column = square
+        print('Computer fires at', string.ascii_uppercase[column] + str(row + 1))
+        if square in self.squares['human']['ship_squares']:
+            print('Hit!')
+            self.squares['human']['hits'].add(square)
+            for ship in self.ships['human']:
+                length = self.ship_dict[ship]
+                if square in self.ships['human'][ship][0]:
+                    self.ships['human'][ship][0].remove(square)
+                    self.ships['human'][ship][1].add(square)
+                    if len(self.ships['human'][ship][0]) == 0: # sink
+                        print('Computer sinks', ship, '\b!')
+                        for square in self.ships['human'][ship][1]:
+                            self.squares['human']['hits'].remove(square)
+                            self.squares['human']['sunk_ship_squares'][square] = length
+                        self.sunk['human'].append(ship)
+                        if len(self.sunk['human']) == len(self.ship_dict):
+                            print('Game over!  Computer wins!')
+                            print('Human')
+                            self.print_board('human')
+                            print('Computer')
+                            self.print_board('computer')
+                            return "Game over"
+                        if length == self.min_ship_length:
+                            self.min_ship_length = min([self.ship_dict[key] 
+                                                       for key in self.ship_dict.keys()
+                                                       if key not in self.sunk['human']])
+        else:
+            print('Miss!')
+            self.squares['human']['misses'].add(square)
 
 
     def play(self):
