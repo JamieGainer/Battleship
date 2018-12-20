@@ -53,7 +53,7 @@ class Game():
             print()
 
 
-    def setup_computer_ships(self, maxtries = 1):
+    def setup_computer_ships(self, maxtries = 100000):
         ship_square_dict = self.squares['computer']['ship_squares']
         for ship, length in self.ship_dict.items():
             tries = 0
@@ -76,6 +76,7 @@ class Game():
                 else:
                     for square in ship_squares:
                         ship_square_dict[square] = (ship, length)
+                        self.ships['computer'][ship] = (set(ship_squares), set([]))
                     break
             if tries >= maxtries:
                 raise RuntimeError("Unable to setup pieces")
@@ -120,7 +121,84 @@ class Game():
                 else:
                     for square in squares:
                         self.squares['human']['ship_squares'][square] = (ship, length)
+                        self.ships['human'][ship] = (set(ship_squares), set([]))
                     break
+
+    def computer_fires(self):
+        import string
+        while True:
+            row = random.randint(0, self.board_height - 1)
+            column = random.randint(0, self.board_width - 1)
+            square = (row, column)
+            for dict_name in ['hits', 'misses', 'sunk_ship_squares']:
+                if square in self.squares['human'][dict_name]:
+                    break
+            else:
+                print('Computer fires at', string.ascii_uppercase[column] + 
+                      str(row + 1))
+                if square in self.squares['human']['ship_squares']:
+                    print('Hit!')
+                    self.squares['human']['hits'].add(square)
+                else:
+                    print('Miss!')
+                    self.squares['human']['misses'].add(square)
+                break
+
+
+    def play(self):
+        import string
+        self.setup_computer_ships()
+        self.setup_human_ships()
+        while True:
+            print('What would you like to do?')
+            print('[F]ire, [S]ee board, or [Q]uit?')
+            answer = input()
+            if answer.upper() not in ['F', 'Q', 'S']:
+                print('Not sure what to do with that.')
+                continue
+            elif answer.upper() == 'Q':
+                print('Bye')
+                return
+            elif answer.upper() == 'S':
+                print('See [H]uman or [C]omputer board?')
+                answer = input()
+                if answer.upper() not in ['H', 'C']:
+                    print('Not sure what to do with that.')
+                    continue
+                elif answer.upper() == 'H':
+                    board = 'human'
+                else:
+                    board = 'computer'
+                self.print_board(board)
+            else:
+                print("Please enter square to fire on.")
+                print("(E.g. C6 gives 3rd column from left and 6th row from top.)")
+                print("Or press 'q' or 'Q' to quit.")
+                square_name = input()
+                if square_name.upper() == 'Q':
+                    return
+                try:
+                    column = string.ascii_uppercase.index(square_name[0].upper())
+                    assert column >= 0 and column < self.board_width
+                    row = int(square_name[1:]) - 1
+                    assert row >= 0 and row < self.board_height
+                    square = (row, column)
+                except:
+                    print('Invalid Square')
+                    continue
+                for dict_name in ['hits', 'misses', 'sunk_ship_squares']:
+                    if square in self.squares['computer'][dict_name]:
+                        print(square_name, 'already selected')
+                        break
+                else:
+                    if square in self.squares['computer']['ship_squares']:
+                        print('Hit!')
+                        self.squares['computer']['hits'].add(square)
+                    else:
+                        print('Miss!')
+                        self.squares['computer']['misses'].add(square)
+                    self.computer_fires()
+
 
 
 
