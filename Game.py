@@ -45,7 +45,7 @@ class Game():
                 elif (i,j) in self.squares[board]['misses']:
                     print(' O ', end = '|')
                 elif (i,j) in self.squares[board]['sunk_ship_squares']:
-                    length = self.squares[board]['sunk_ship_squares'][(i,j)][1]
+                    length = self.squares[board]['sunk_ship_squares'][(i,j)]
                     print(' ' + str(length), end = ' |')
                 elif (i,j) in self.squares[board]['ship_squares'] and is_human:
                     print(' $ ', end = '|')
@@ -62,16 +62,16 @@ class Game():
                 ship_squares = set([])
                 if random.random() > 0.5: # horizontal placement
                     TL_x = random.randint(0, self.board_width - length)
-                    TL_y = random.randint(0, self.board_height)
+                    TL_y = random.randint(0, self.board_height - 1)
                     squares = [(x, TL_y) for x in range(TL_x, TL_x + length)]
                 else:
-                    TL_x = random.randint(0, self.board_width)
+                    TL_x = random.randint(0, self.board_width - 1)
                     TL_y = random.randint(0, self.board_height - length)
                     squares = [(TL_x, y) for y in range(TL_y, TL_y + length)]
                 for square in squares:
                     if square in ship_square_dict:
                         tries += 1
-                        continue
+                        break
                     else:
                         ship_squares.add(square)
                 else:
@@ -122,7 +122,7 @@ class Game():
                 else:
                     for square in squares:
                         self.squares['human']['ship_squares'][square] = (ship, length)
-                        self.ships['human'][ship] = (set(ship_squares), set([]))
+                        self.ships['human'][ship] = (set(squares), set([]))
                     break
 
 
@@ -144,13 +144,13 @@ class Game():
                     for ship in self.ships['human']:
                         length = self.ship_dict[ship]
                         if square in self.ships['human'][ship][0]:
-                            self.ships['human'][ship][0].subtract(square)
+                            self.ships['human'][ship][0].remove(square)
                             self.ships['human'][ship][1].add(square)
                             if len(self.ships['human'][ship][0]) == 0: # sink
                                 print('Computer sinks', ship, '\b!')
                                 for square in self.ships['human'][ship][1]:
-                                    self.squares['human']['hits'].subtract(square)
-                                    self.squares['human']['sunk_ship_squares'] = length
+                                    self.squares['human']['hits'].remove(square)
+                                    self.squares['human']['sunk_ship_squares'][square] = length
                                 self.sunk['human'].append(ship)
                                 if len(self.sunk['human']) == len(self.ship_dict):
                                     print('Game over!  Computer wins!')
@@ -214,6 +214,24 @@ class Game():
                     if square in self.squares['computer']['ship_squares']:
                         print('Hit!')
                         self.squares['computer']['hits'].add(square)
+                        for ship in self.ships['computer']:
+                            length = self.ship_dict[ship]
+                            if square in self.ships['computer'][ship][0]:
+                                self.ships['computer'][ship][0].remove(square)
+                                self.ships['computer'][ship][1].add(square)
+                                if len(self.ships['computer'][ship][0]) == 0: # sink
+                                    print('Human sinks', ship, '\b!')
+                                    for square in self.ships['computer'][ship][1]:
+                                        self.squares['computer']['hits'].remove(square)
+                                        self.squares['computer']['sunk_ship_squares'][square] = length
+                                    self.sunk['computer'].append(ship)
+                                    if len(self.sunk['computer']) == len(self.ship_dict):
+                                        print('Game over!  Human wins!')
+                                        print('Human')
+                                        self.print_board('human')
+                                        print('Computer')
+                                        self.print_board('computer')
+                                        return
                     else:
                         print('Miss!')
                         self.squares['computer']['misses'].add(square)
