@@ -140,17 +140,14 @@ class Game():
                     continue
                 if orientation.upper() == 'H':
                     squares = [(row, column + i) for i in range(length)]
-                    if column + i >= self.board_width:
-                        print('Ship out of bounds')
-                        continue
                 else:
                     squares = [(row + i, column) for i in range(length)]
-                    if row + i >= self.board_height:
-                        print('Ship out of bounds')
-                        continue
                 for square in squares:
                     if square in self.squares['human']['ship_squares']:
                         print('Ship in the way!')
+                        break
+                    if square[0] >= self.board_width or square[1] >= self.board_height:
+                        print('Ship cannot be placed out of bounds')
                         break
                 else:
                     for square in squares:
