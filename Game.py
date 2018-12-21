@@ -13,6 +13,15 @@ default_ship_dict = {
 class Game():
     """Placeholder for docstring """
 
+    def generate_grid_squares(self, mesh):
+        squares = []
+        for i in range(self.board_height):
+            for j in range(self.board_width):
+                if (i + j) % mesh == 0:
+                    squares.append((i,j))
+        return squares
+
+
     def __init__(self, board_height = 10, board_width = 10, 
                  ship_dict = default_ship_dict):
 
@@ -21,6 +30,7 @@ class Game():
         assert self.board_width < 17 # so as not to reuse 'Q'
         self.ship_dict = ship_dict
         self.min_ship_length = min(self.ship_dict.values())
+        self.target_squares = self.generate_grid_squares(self.min_ship_length)
 
         self.squares = {}
         for board in ['human', 'computer']:
@@ -154,10 +164,19 @@ class Game():
                         break
                 if ok_square:
                     break
-        if square == None:
+        if square == None: # use grid
             while True:
-                row = random.randint(0, self.board_height - 1)
-                column = random.randint(0, self.board_width - 1)
+                trial_square = self.target_squares.pop()
+                for dict_name in ['hits', 'misses', 'sunk_ship_squares']:
+                    if trial_square in self.squares['human'][dict_name]:
+                        continue
+                else:
+                    square = trial_square
+                    break
+        if square == None: # random (if something goes wrong)
+            while True:
+                row = random.randint(0, self.board_width - 1)
+                column = random.randint(0, self.board_height - 1)
                 trial_square = (row, column)
                 for dict_name in ['hits', 'misses', 'sunk_ship_squares']:
                     if trial_square in self.squares['human'][dict_name]:
@@ -193,6 +212,7 @@ class Game():
                             self.min_ship_length = min([self.ship_dict[key] 
                                                        for key in self.ship_dict.keys()
                                                        if key not in self.sunk['human']])
+                            self.target_squares = self.generate_grid_squares(self.min_ship_length)
         else:
             print('Miss!')
             self.squares['human']['misses'].add(square)
