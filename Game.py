@@ -1,4 +1,4 @@
-""" Placeholder for docstring """
+""" Class and brief code to instantiate the class and play a game of battleship. """
 
 import random
 
@@ -11,7 +11,6 @@ default_ship_dict = {
                      }
 
 class Game():
-    """Placeholder for docstring """
 
     def generate_grid_squares(self, mesh):
         squares = []
@@ -24,7 +23,12 @@ class Game():
 
     def __init__(self, board_height = 10, board_width = 10, 
                  ship_dict = default_ship_dict):
-
+        import os
+        import pickle
+        self.frequency_dict = {}
+        if os.path.exists('battleship.pickle'):
+            with open('battleship.pickle', 'rb') as ship_data:
+                self.frequency_dict = pickle.load(ship_data)
         self.board_height = board_height
         self.board_width = board_width
         assert self.board_width < 17 # so as not to reuse 'Q'
@@ -43,6 +47,17 @@ class Game():
         self.ships = {'human': {}, 'computer': {}}
         self.sunk = {'human': [], 'computer': []}
         self.ships_setup = False
+        ship_lengths = tuple(sorted(self.ship_dict.values()))
+        self.dict_tuple = ((self.board_width, self.board_height), ship_lengths)
+
+
+    def sort_target_squares(self):
+        """Start with squares in a grid which have been used by the human player
+        in past games"""
+        if self.dict_tuple in self.frequency_dict:
+            fd = self.frequency_dict[self.dict_tuple]
+            sort_list = [(fd[square], square) for square in self.target_squares]
+            self.target_squares = [x[1] for x in sorted(sort_list)]
 
 
     def print_board(self, board):
@@ -143,7 +158,7 @@ class Game():
         if len(self.squares['human']['hits']) != 0:
             hits = set([])
             ok_square = False
-            while True:
+            while len(self.squares['human']['hits']) > 0:
                 hit = self.squares['human']['hits'].pop()
                 hits.add(hit)
                 trials = [(hit[0], hit[1] + 1), (hit[0], hit[1] - 1),
@@ -208,20 +223,44 @@ class Game():
                             print('Computer')
                             self.print_board('computer')
                             return "Game over"
+
                         if length == self.min_ship_length:
                             self.min_ship_length = min([self.ship_dict[key] 
                                                        for key in self.ship_dict.keys()
                                                        if key not in self.sunk['human']])
                             self.target_squares = self.generate_grid_squares(self.min_ship_length)
+                            self.sort_target_squares()
         else:
             print('Miss!')
             self.squares['human']['misses'].add(square)
 
 
     def play(self):
+        import pickle
         import string
+
         self.setup_computer_ships()
         self.setup_human_ships()
+        self.sort_target_squares()
+
+        if self.dict_tuple in self.frequency_dict:
+            fd = self.frequency_dict[self.dict_tuple]
+            for square in fd:
+                if square in self.squares['human']['ship_squares']:
+                    fd[square] += 1
+        else:
+            self.frequency_dict[self.dict_tuple] = {}
+            fd = self.frequency_dict[self.dict_tuple]
+            for i in range(self.board_height):
+                for j in range(self.board_width):
+                    if (i,j) in self.squares['human']['ship_squares']:
+                        fd[(i,j)] = 1
+                    else:
+                        fd[(i,j)] = 0
+
+        with open('battleship.pickle', 'wb') as pickle_file:
+            pickle.dump(self.frequency_dict, pickle_file)
+
         while True:
             print('What would you like to do?')
             print('[F]ire, [S]ee board, or [Q]uit?')
@@ -292,7 +331,7 @@ class Game():
                     if message == 'Game over':
                         return
 
+# Play the game with default parameters
 
-
-
-
+default = Game()
+default.play()
