@@ -113,7 +113,8 @@ class Game():
         import string
         for ship, length in self.ship_dict.items():
             while True:
-                print("Please enter top left corner for", ship)
+                print("Please enter top left corner for", ship, '(', end = '')
+                print(length, '\b)')
                 print("(E.g. C6 gives 3rd column from left and 6th row from top.)")
                 print("Or press 'q' or 'Q' to quit.")
                 square = input()
